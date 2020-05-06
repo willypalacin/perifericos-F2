@@ -329,6 +329,7 @@ void DMA2_Stream0_IRQHandler(void){
 			ADC_Cmd(ADC3, DISABLE);
 
 			DMA_option = 1;
+			//Configurem la DMA perque passi de memoria a memoria
 			DMA_MemToMem_Config();
 
 		}else {
@@ -695,21 +696,23 @@ int main(void) {
     while(1) {
     	calcula_temps_injeccio();
     	espera_interrupcio();
-    }
 
-    while(1){
+    	//Aqui niria ADC init
+    	//Quan acabes l'ADC dins de la seva funció hauroa d'activar la variable mostres32 a 1
 
-    	while(!mostres32){
+    	while(!mostres32);
 
-    		mostres32 = 0;
-			transferencia_completada = 0;
+	ADC_DMA2_config();
 
-			//Cuando queramos hacer la transferencia de DMA, la comanda es esta:
-			DMA_Cmd(DMA2_Stream0, ENABLE);
+	mostres32 = 0;
+	transferencia_completada = 0;
 
-			//Esperem que acabi la transferencia
-			while(!transferencia_completada);
-    	}
+	//Cuando queramos hacer la transferencia de DMA, la comanda es esta:
+	DMA_Cmd(DMA2_Stream0, ENABLE);
+
+	//Esperem que acabi la transferencia
+	while(!transferencia_completada);
+
     }
 
 }
