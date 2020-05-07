@@ -33,6 +33,9 @@ uint16_t count_tinj = 0;
 uint16_t Tim6_RSI;
 uint16_t Tim2_RSI;
 uint16_t EXTI1_RSI;
+uint16_t aux = 0;
+uint16_t auxDMA = 0;
+
 
 
 uint16_t ADC3ConvertedValue[MIDA] = {};
@@ -49,6 +52,7 @@ uint16_t Cabalimetre_mostra_0 = 0;
 uint16_t Sensor_temp_liquid_refrigerant_mostra_0 = 0;
 uint16_t Sensor_temp_aire_mostra_0 = 0;
 uint16_t Tensio_bateria_mostra_0 = 0;
+uint16_t entra = 0;
 
 
 void configuracionDMAyADC(void){
@@ -74,7 +78,7 @@ void configuracionDMAyADC(void){
 	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
 	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
 	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
-	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord; //Datos de 16 bits
 	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal; //DMA_Mode_Circular
 	DMA_InitStructure.DMA_Priority = DMA_Priority_High;
 	DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
@@ -90,7 +94,8 @@ void configuracionDMAyADC(void){
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 |GPIO_Pin_7 | GPIO_Pin_8 ;
+
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 ;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
 	GPIO_Init(GPIOF, &GPIO_InitStructure);
@@ -109,9 +114,9 @@ void configuracionDMAyADC(void){
 	ADC_InitStructure.ADC_ScanConvMode = DISABLE;
 	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
 	ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_Rising;
-	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigInjecConv_T2_TRGO;
+	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigInjecConv_T5_TRGO; //
 	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-	ADC_InitStructure.ADC_NbrOfConversion = 1;
+	ADC_InitStructure.ADC_NbrOfConversion = 4;
 	ADC_Init(ADC3, &ADC_InitStructure);
 
 
@@ -121,14 +126,15 @@ void configuracionDMAyADC(void){
 	ADC_RegularChannelConfig(ADC3, ADC_Channel_6, 1, ADC_SampleTime_15Cycles);
 
 
-	/* Enable DMA request after last transfer (Single-ADC mode) */
-	//NO SE SI HO FEM AIXI...
+
+
+	//DEspues del ADC DMAREQ
 	ADC_DMARequestAfterLastTransferCmd(ADC3, ENABLE);
 
-	/* Enable ADC3 DMA */
+	// Activamos ADC3 DMA
 	ADC_DMACmd(ADC3, ENABLE);
 
-	/* Enable ADC3 */
+	//Activamos ADC3
 	ADC_Cmd(ADC3, ENABLE);
 
 	NVIC_InitTypeDef NVIC_InitStructure;
@@ -138,7 +144,7 @@ void configuracionDMAyADC(void){
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-	DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
+	//DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
 	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, ENABLE);
 
 	//Si no va, la configurem així
@@ -160,14 +166,14 @@ void DMA_MemToMem_Config(void){
 	DMA_InitTypeDef       DMA_InitStructure;
 	//GPIO_InitTypeDef      GPIO_InitStructure;
 
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2 | RCC_AHB1Periph_GPIOC, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2 | RCC_AHB1Periph_GPIOC |RCC_AHB1Periph_GPIOF, ENABLE);
 
 	DMA_InitStructure.DMA_Channel = DMA_Channel_2;
 	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&ADC3ConvertedValue;
 	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)&FinalValue;
 	DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToMemory;
 	DMA_InitStructure.DMA_BufferSize = (uint32_t)MIDA;
-	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Enable;
+	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
 	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
 	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord; //16 bits
 	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord; //16 bits
@@ -188,52 +194,14 @@ void DMA_MemToMem_Config(void){
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-	DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
-	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, ENABLE);
+	//DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
+	//DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, ENABLE);
 
 }
 
 
 
-//Configuracio de la DMA - (BORRAR SI L'ALTRE FUNCIONA)
-/*void init_DMA2(void){
-   DMA_InitTypeDef DMA_InitStructure;
-   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
-   //Netegem els bits
-   DMA_DeInit(DMA2_Stream0);
-   //Mentres hi hagi alguna operació executantse esperem
-   while (DMA_GetCmdStatus(DMA2_Stream0) != DISABLE);
-   //Configurem el canal, la direccio, el mode, la prioritat...
-   DMA_InitStructure.DMA_Channel = DMA_Channel_0;
-   DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToMemory;
-   DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
-   DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
-   DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
-   DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-   //Com fem memory-to-memory transfer és obligatori activar el FIFO mode
-   DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;
-   DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
-   //Definim la mida de les dades a l'origen i al desti i activem l'autoincrement d'adreces
-   DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord; //!!! OJO, NO SE SI ES WORD, pero serien 32 bits...
-   DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-   DMA_InitStructure.DMA_MemoryDataSize=DMA_MemoryDataSize_HalfWord;
-   DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Enable;
-   //Definim quants beats transferirem
-   DMA_InitStructure.DMA_BufferSize = Num_blocs_de_data_a_transemtre;
-   //Assignem l'inici dels blocs origen i desti
-   DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t) data_a_transmetre;
-   DMA_InitStructure.DMA_Memory0BaseAddr = Origen_buffer;
-   DMA_Init(DMA2_Stream0,&DMA_InitStructure);
-   DMA_ITConfig(DMA2_Stream0,DMA_IT_TC,ENABLE);
-   //Configurem la interrupció, per quan acabi la transferència
-   NVIC_InitTypeDef NVIC_InitStructure;
-   NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream0_IRQn;
-   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority =0;
-   NVIC_InitStructure.NVIC_IRQChannelSubPriority =0;
-   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-   NVIC_Init(&NVIC_InitStructure);
-}
-*/
+
 
 //Configuració simuladors switch
 void init_switch(void){
@@ -277,6 +245,7 @@ void init_switch(void){
 
 //Interrupcio de finalitzacio de la transferencia per DMA
 void DMA2_Stream0_IRQHandler(void){
+	 auxDMA = 200;
 	//Mirem si el flag de fi de transferencia esta actiu
 	if(DMA_GetITStatus(DMA2_Stream0,DMA_IT_TCIF0) != RESET) {
 
@@ -295,27 +264,34 @@ void DMA2_Stream0_IRQHandler(void){
 
 		}else {
 
-			configuracionDMAyADC();
+			//configuracionDMAyADC();
 
 			DMA_option = 0;
-			transferencia_completada = 1;
+			//transferencia_completada = 1;
 		}
 	}
 }
 
 
 void EXTI1_IRQHandler(void) {
-	EXTI1_RSI =	TIM_GetCounter(TIM5);
-    // comprobamos
-    if (EXTI_GetITStatus(EXTI_Line1) != RESET) {
-    	interrupcio = 1;
+	//EXTI1_RSI =	TIM_GetCounter(TIM5);
 
-    	velocidad= (6000000/(cont_10micros*2)); //xq cuenta cada 10 micros segun los tics
+    if (EXTI_GetITStatus(EXTI_Line1) != RESET) {
+    	// comprobamos flanco de bajada
+    	if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_1)) {
+    		configuracionDMAyADC();
+    		aux = 200;
+    		//Flanco de subida
+    	}else {
+    		interrupcio = 1;
+    		velocidad= (6000000/(cont_10micros*2)); //xq cuenta cada 10 micros segun los tics
+
+    		cont_10micros = 0;
+    	}
     	//limpiamos int
     	EXTI_ClearITPendingBit(EXTI_Line1);
-    	cont_10micros = 0;
     }
-    EXTI1_RSI = TIM_GetCounter(TIM5) - EXTI1_RSI;
+   // EXTI1_RSI = TIM_GetCounter(TIM5) - EXTI1_RSI;
 }
 
 void ConfiguraPD1(void) {
@@ -350,9 +326,9 @@ void ConfiguraPD1(void) {
     // PD1 = EXTI1_IRQn
     NVIC_InitStruct.NVIC_IRQChannel = EXTI1_IRQn;
     //No prioridad
-    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
+    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x02;
     //No subprioridad
-    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x02;
     NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStruct);
 }
@@ -390,12 +366,22 @@ void calcula_temps_injeccio(void){
 
 }
 
+void TIM5_IRQHandler(void) {
 
-void delay(int counter)
-{
-	int i;
-	for (i = 0; i < counter * 100000; i++) {}
+	if (TIM_GetITStatus(TIM5, TIM_IT_Update) != RESET){
+		if(entra==0) {
+				  GPIO_SetBits(GPIOE, GPIO_Pin_4);
+				  entra = 1;
+			  } else {
+				  GPIO_ResetBits(GPIOE, GPIO_Pin_4);
+				  	  entra = 0;
+			  }
+		TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
+
+	}
+
 }
+
 
 void configuraTimer2(uint16_t numOfMilleseconds){
   NVIC_InitTypeDef NVIC_InitStructure;
@@ -425,7 +411,7 @@ void configuraTimer5(){
   /* global interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = TIM5_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
@@ -639,7 +625,8 @@ void inicialitza_sistema(void){
 	ConfiguraPD1();
 	init_switch();
 	configuraGPIOE();
-	configuracionDMAyADC();
+	//configuracionDMAyADC();
+	//entra = ADC_GetConversionValue(ADC3);
 
 }
 
@@ -663,4 +650,3 @@ int main(void) {
     	espera_interrupcio();
     }
 }
-
