@@ -16,6 +16,9 @@
 #define MIDA 32
 
 #define ADC3_DR_ADDRESS     ((uint32_t)0x4001224C)
+#define ADC_ExternalTrigInjecConv_T5_TRGO   ((uint32_t)0x000B0000)
+
+
 
 
 //VARIABLES
@@ -62,9 +65,10 @@ void configuracionDMAyADC(void){
 	ADC_CommonInitTypeDef ADC_CommonInitStructure;
 	DMA_InitTypeDef       DMA_InitStructure;
 	GPIO_InitTypeDef      GPIO_InitStructure;
+	GPIO_InitTypeDef      GPIO_InitStructure2;
 
 	/* Enable ADC3, DMA2 and GPIO clocks ****************************************/
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2 | RCC_AHB1Periph_GPIOC, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2 | RCC_AHB1Periph_GPIOC|RCC_AHB1Periph_GPIOF, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC3, ENABLE);
 
 	//Configurem el channel2 del canal 0 de la DMA2
@@ -86,6 +90,7 @@ void configuracionDMAyADC(void){
 	DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
 	DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
 	DMA_Init(DMA2_Stream0, &DMA_InitStructure);
+
 	DMA_Cmd(DMA2_Stream0, ENABLE);
 
 
@@ -95,10 +100,10 @@ void configuracionDMAyADC(void){
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 ;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-	GPIO_Init(GPIOF, &GPIO_InitStructure);
+	GPIO_InitStructure2.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 ;
+	GPIO_InitStructure2.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_InitStructure2.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOF, &GPIO_InitStructure2);
 
 
 
@@ -111,7 +116,7 @@ void configuracionDMAyADC(void){
 
 
 	ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
-	ADC_InitStructure.ADC_ScanConvMode = DISABLE;
+	ADC_InitStructure.ADC_ScanConvMode = ENABLE; //
 	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
 	ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_Rising;
 	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigInjecConv_T5_TRGO; //
@@ -140,12 +145,13 @@ void configuracionDMAyADC(void){
 	NVIC_InitTypeDef NVIC_InitStructure;
 
 	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream0_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x05;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x05;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	//DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
-	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, ENABLE);
+	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC|DMA_IT_HT, ENABLE);
+
 
 	//Si no va, la configurem així
 	/*
@@ -195,7 +201,7 @@ void DMA_MemToMem_Config(void){
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	//DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
-	//DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, ENABLE);
+	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, ENABLE);
 
 }
 
@@ -280,6 +286,7 @@ void EXTI1_IRQHandler(void) {
     	// comprobamos flanco de bajada
     	if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_1)) {
     		configuracionDMAyADC();
+    		ADC_SoftwareStartConv(ADC3);
     		aux = 200;
     		//Flanco de subida
     	}else {
