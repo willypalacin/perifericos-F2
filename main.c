@@ -45,41 +45,13 @@ uint16_t mostres32 = 0;
 
 uint16_t DMA_option = 0;
 
-uint16_t Cabalímetre_mostra_0 = 0;
-uint16_t Sensor_temp_líquid_refrigerant_mostra_0 = 0;
+uint16_t Cabalimetre_mostra_0 = 0;
+uint16_t Sensor_temp_liquid_refrigerant_mostra_0 = 0;
 uint16_t Sensor_temp_aire_mostra_0 = 0;
-uint16_t Tensió_bateria_mostra_0 = 0;
-uint16_t Cabalímetre_mostra_1 = 0;
-uint16_t Sensor_temp_líquid_refrigerant_mostra_1 = 0;
-uint16_t Sensor_temp_aire_mostra_1 = 0;
-uint16_t Tensió_bateria_mostra_1 = 0;
-uint16_t Cabalímetre_mostra_2 = 0;
-uint16_t Sensor_temp_líquid_refrigerant_mostra_2 = 0;
-uint16_t Sensor_temp_aire_mostra_2 = 0;
-uint16_t Tensió_bateria_mostra_2 = 0;
-uint16_t Cabalímetre_mostra_3 = 0;
-uint16_t Sensor_temp_líquid_refrigerant_mostra_3 = 0;
-uint16_t Sensor_temp_aire_mostra_3 = 0;
-uint16_t Tensió_bateria_mostra_3 = 0;
-uint16_t Cabalímetre_mostra_4 = 0;
-uint16_t Sensor_temp_líquid_refrigerant_mostra_4 = 0;
-uint16_t Sensor_temp_aire_mostra_4 = 0;
-uint16_t Tensió_bateria_mostra_4 = 0;
-uint16_t Cabalímetre_mostra_5 = 0;
-uint16_t Sensor_temp_líquid_refrigerant_mostra_5 = 0;
-uint16_t Sensor_temp_aire_mostra_5 = 0;
-uint16_t Tensió_bateria_mostra_5 = 0;
-uint16_t Cabalímetre_mostra_6 = 0;
-uint16_t Sensor_temp_líquid_refrigerant_mostra_6 = 0;
-uint16_t Sensor_temp_aire_mostra_6 = 0;
-uint16_t Tensió_bateria_mostra_6 = 0;
-uint16_t Cabalímetre_mostra_7 = 0;
-uint16_t Sensor_temp_líquid_refrigerant_mostra_7 = 0;
-uint16_t Sensor_temp_aire_mostra_7 = 0;
-uint16_t Tensió_bateria_mostra_7 = 0;
+uint16_t Tensio_bateria_mostra_0 = 0;
 
 
-void ADC_DMA2_config(void){
+void configuracionDMAyADC(void){
 
 
 	ADC_InitTypeDef       ADC_InitStructure;
@@ -113,23 +85,26 @@ void ADC_DMA2_config(void){
 	DMA_Cmd(DMA2_Stream0, ENABLE);
 
 
-	//Aixo no ho hauria de tocar aqui
-	/* Configure ADC3 Channel13 pin as analog input *****************************
+
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
-	*/
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 |GPIO_Pin_7 | GPIO_Pin_8 ;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOF, &GPIO_InitStructure);
 
-	/* ADC Common Init *********************************************************
+
+
 	ADC_CommonInitStructure.ADC_Mode = ADC_Mode_Independent;
 	ADC_CommonInitStructure.ADC_Prescaler = ADC_Prescaler_Div2;
 	ADC_CommonInitStructure.ADC_DMAAccessMode = ADC_DMAAccessMode_Disabled;
 	ADC_CommonInitStructure.ADC_TwoSamplingDelay = ADC_TwoSamplingDelay_5Cycles;
 	ADC_CommonInit(&ADC_CommonInitStructure);
-	*/
 
-	/* ADC3 Init ***************************************************************
+
+
 	ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
 	ADC_InitStructure.ADC_ScanConvMode = DISABLE;
 	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
@@ -138,12 +113,13 @@ void ADC_DMA2_config(void){
 	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
 	ADC_InitStructure.ADC_NbrOfConversion = 1;
 	ADC_Init(ADC3, &ADC_InitStructure);
-	*/
 
 
-	/* ADC3 regular channel13 configuration ************************************
 	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 1, ADC_SampleTime_15Cycles);
-	*/
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_4, 1, ADC_SampleTime_15Cycles);
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_5, 1, ADC_SampleTime_15Cycles);
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_6, 1, ADC_SampleTime_15Cycles);
+
 
 	/* Enable DMA request after last transfer (Single-ADC mode) */
 	//NO SE SI HO FEM AIXI...
@@ -154,9 +130,6 @@ void ADC_DMA2_config(void){
 
 	/* Enable ADC3 */
 	ADC_Cmd(ADC3, ENABLE);
-
-
-
 
 	NVIC_InitTypeDef NVIC_InitStructure;
 
@@ -178,7 +151,6 @@ void ADC_DMA2_config(void){
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	*/
-
 }
 
 void DMA_MemToMem_Config(void){
@@ -225,16 +197,12 @@ void DMA_MemToMem_Config(void){
 
 //Configuracio de la DMA - (BORRAR SI L'ALTRE FUNCIONA)
 /*void init_DMA2(void){
-
    DMA_InitTypeDef DMA_InitStructure;
    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
-
    //Netegem els bits
    DMA_DeInit(DMA2_Stream0);
-
    //Mentres hi hagi alguna operació executantse esperem
    while (DMA_GetCmdStatus(DMA2_Stream0) != DISABLE);
-
    //Configurem el canal, la direccio, el mode, la prioritat...
    DMA_InitStructure.DMA_Channel = DMA_Channel_0;
    DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToMemory;
@@ -242,28 +210,21 @@ void DMA_MemToMem_Config(void){
    DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
    DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
    DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-
    //Com fem memory-to-memory transfer és obligatori activar el FIFO mode
    DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;
    DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
-
    //Definim la mida de les dades a l'origen i al desti i activem l'autoincrement d'adreces
    DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord; //!!! OJO, NO SE SI ES WORD, pero serien 32 bits...
    DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
    DMA_InitStructure.DMA_MemoryDataSize=DMA_MemoryDataSize_HalfWord;
    DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Enable;
-
-
    //Definim quants beats transferirem
    DMA_InitStructure.DMA_BufferSize = Num_blocs_de_data_a_transemtre;
-
    //Assignem l'inici dels blocs origen i desti
    DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t) data_a_transmetre;
    DMA_InitStructure.DMA_Memory0BaseAddr = Origen_buffer;
-
    DMA_Init(DMA2_Stream0,&DMA_InitStructure);
    DMA_ITConfig(DMA2_Stream0,DMA_IT_TC,ENABLE);
-
    //Configurem la interrupció, per quan acabi la transferència
    NVIC_InitTypeDef NVIC_InitStructure;
    NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream0_IRQn;
@@ -334,7 +295,7 @@ void DMA2_Stream0_IRQHandler(void){
 
 		}else {
 
-			ADC_DMA2_config();
+			configuracionDMAyADC();
 
 			DMA_option = 0;
 			transferencia_completada = 1;
@@ -470,8 +431,8 @@ void configuraTimer5(){
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
   TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
   //Salta cada milisegundo * numOfMilleseconds.
-  TIM_TimeBaseStructure.TIM_Period = 0xFFFFFFFF;
-  TIM_TimeBaseStructure.TIM_Prescaler = 1;
+  TIM_TimeBaseStructure.TIM_Period = 799;
+  TIM_TimeBaseStructure.TIM_Prescaler = 20;
 
   TIM_TimeBaseStructure.TIM_ClockDivision = 0;
   TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
@@ -479,8 +440,10 @@ void configuraTimer5(){
   TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
 
   TIM_ITConfig(TIM5, TIM_IT_Update, ENABLE);
+  TIM_SelectOutputTrigger(TIM5, TIM_TRGOSource_Update); //ACtivamos el trigger para que convierta cada 200 micros
   TIM_Cmd(TIM5, ENABLE);
 }
+
 
 
 void configuraGPIOG13() {
@@ -676,6 +639,8 @@ void inicialitza_sistema(void){
 	ConfiguraPD1();
 	init_switch();
 	configuraGPIOE();
+	configuracionDMAyADC();
+
 }
 
 void espera_interrupcio(void){
@@ -696,23 +661,6 @@ int main(void) {
     while(1) {
     	calcula_temps_injeccio();
     	espera_interrupcio();
-
-    	//Aqui niria ADC init
-    	//Quan acabes l'ADC dins de la seva funció hauroa d'activar la variable mostres32 a 1
-
-    	while(!mostres32);
-
-	ADC_DMA2_config();
-
-	mostres32 = 0;
-	transferencia_completada = 0;
-
-	//Cuando queramos hacer la transferencia de DMA, la comanda es esta:
-	DMA_Cmd(DMA2_Stream0, ENABLE);
-
-	//Esperem que acabi la transferencia
-	while(!transferencia_completada);
-
     }
-
 }
+
