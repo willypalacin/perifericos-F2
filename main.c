@@ -64,8 +64,7 @@ void configuracionDMAyADC(void){
 	ADC_InitTypeDef       ADC_InitStructure;
 	ADC_CommonInitTypeDef ADC_CommonInitStructure;
 	DMA_InitTypeDef       DMA_InitStructure;
-	GPIO_InitTypeDef      GPIO_InitStructure;
-	GPIO_InitTypeDef      GPIO_InitStructure2;
+
 
 	/* Enable ADC3, DMA2 and GPIO clocks ****************************************/
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2 | RCC_AHB1Periph_GPIOC|RCC_AHB1Periph_GPIOF, ENABLE);
@@ -95,16 +94,6 @@ void configuracionDMAyADC(void){
 
 
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-	GPIO_InitStructure2.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 ;
-	GPIO_InitStructure2.GPIO_Mode = GPIO_Mode_AN;
-	GPIO_InitStructure2.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-	GPIO_Init(GPIOF, &GPIO_InitStructure2);
-
 
 
 	ADC_CommonInitStructure.ADC_Mode = ADC_Mode_Independent;
@@ -117,7 +106,7 @@ void configuracionDMAyADC(void){
 
 	ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
 	ADC_InitStructure.ADC_ScanConvMode = ENABLE; //
-	ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
+	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
 	ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_Rising;
 	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigInjecConv_T5_TRGO; //
 	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
@@ -125,10 +114,7 @@ void configuracionDMAyADC(void){
 	ADC_Init(ADC3, &ADC_InitStructure);
 
 
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 1, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_4, 1, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_5, 1, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_6, 1, ADC_SampleTime_15Cycles);
+
 
 
 
@@ -141,6 +127,11 @@ void configuracionDMAyADC(void){
 	//Activamos ADC3
 	ADC_Cmd(ADC3, ENABLE);
 
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 1, ADC_SampleTime_15Cycles);
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_4, 1, ADC_SampleTime_15Cycles);
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_5, 1, ADC_SampleTime_15Cycles);
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_6, 1, ADC_SampleTime_15Cycles);
+
 	NVIC_InitTypeDef NVIC_InitStructure;
 
 	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream0_IRQn;
@@ -149,7 +140,8 @@ void configuracionDMAyADC(void){
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
-	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, ENABLE);
+
+	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC | DMA_IT_HT, ENABLE);
 
 
 
@@ -287,7 +279,7 @@ void EXTI1_IRQHandler(void) {
     if (EXTI_GetITStatus(EXTI_Line1) != RESET) {
     	// comprobamos flanco de bajada
     	if(!GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_1)) {
-    		configuracionDMAyADC();
+    		//configuracionDMAyADC();
     		ADC_SoftwareStartConv(ADC3);
     		aux = 200;
     		//Flanco de subida
@@ -328,7 +320,7 @@ void ConfiguraPD1(void) {
 
     EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
     //La int sera por flanco subida
-    EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising;
+    EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
     //anadimos a EXTI
     EXTI_Init(&EXTI_InitStruct);
 
@@ -621,6 +613,21 @@ void init_button(void){
 	GPIO_Init(GPIOA, &gpio);
 }
 
+void configGpioAdc(){
+	GPIO_InitTypeDef      GPIO_InitStructure;
+	GPIO_InitTypeDef      GPIO_InitStructure2;
+
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+	GPIO_InitStructure2.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 ;
+	GPIO_InitStructure2.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_InitStructure2.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOF, &GPIO_InitStructure2);
+}
+
 void inicialitza_sistema(void){
 	init_clock();
 	init_button();
@@ -634,7 +641,8 @@ void inicialitza_sistema(void){
 	ConfiguraPD1();
 	init_switch();
 	configuraGPIOE();
-	//configuracionDMAyADC();
+	configGpioAdc();
+	configuracionDMAyADC();
 	//entra = ADC_GetConversionValue(ADC3);
 
 }
