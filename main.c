@@ -16,7 +16,6 @@
 #define MIDA 32
 
 #define ADC3_DR_ADDRESS     ((uint32_t)0x4001224C)
-#define ADC_ExternalTrigInjecConv_T5_TRGO   ((uint32_t)0x000B0000)
 
 
 
@@ -93,15 +92,24 @@ void configuracionDMAyADC(void){
 	DMA_Cmd(DMA2_Stream0, ENABLE);
 
 
+	GPIO_InitTypeDef      GPIO_InitStructure;
+	GPIO_InitTypeDef      GPIO_InitStructure2;
 
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
 
+	GPIO_InitStructure2.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 ;
+	GPIO_InitStructure2.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_InitStructure2.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOF, &GPIO_InitStructure2);
 
 	ADC_CommonInitStructure.ADC_Mode = ADC_Mode_Independent;
 	ADC_CommonInitStructure.ADC_Prescaler = ADC_Prescaler_Div2;
 	ADC_CommonInitStructure.ADC_DMAAccessMode = ADC_DMAAccessMode_Disabled;
 	ADC_CommonInitStructure.ADC_TwoSamplingDelay = ADC_TwoSamplingDelay_5Cycles;
 	ADC_CommonInit(&ADC_CommonInitStructure);
-
 
 
 	ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
@@ -114,9 +122,10 @@ void configuracionDMAyADC(void){
 	ADC_Init(ADC3, &ADC_InitStructure);
 
 
-
-
-
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 1, ADC_SampleTime_15Cycles);
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_4, 1, ADC_SampleTime_15Cycles);
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_5, 1, ADC_SampleTime_15Cycles);
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_6, 1, ADC_SampleTime_15Cycles);
 
 	//DEspues del ADC DMAREQ
 	ADC_DMARequestAfterLastTransferCmd(ADC3, ENABLE);
@@ -127,16 +136,11 @@ void configuracionDMAyADC(void){
 	//Activamos ADC3
 	ADC_Cmd(ADC3, ENABLE);
 
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 1, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_4, 1, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_5, 1, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_6, 1, ADC_SampleTime_15Cycles);
-
 	NVIC_InitTypeDef NVIC_InitStructure;
 
 	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream0_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x05;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x05;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
@@ -189,8 +193,8 @@ void DMA_MemToMem_Config(void){
 	NVIC_InitTypeDef NVIC_InitStructure;
 	/* Enable the DMA Stream IRQ Channel */
 	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream0_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x01;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x09;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x09;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
@@ -450,7 +454,6 @@ void configuraGPIOE() {
 	gpio.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3|GPIO_Pin_4;
 	gpio.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_Init(GPIOE, &gpio);
-
 }
 
 
@@ -613,20 +616,7 @@ void init_button(void){
 	GPIO_Init(GPIOA, &gpio);
 }
 
-void configGpioAdc(){
-	GPIO_InitTypeDef      GPIO_InitStructure;
-	GPIO_InitTypeDef      GPIO_InitStructure2;
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-	GPIO_InitStructure2.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 ;
-	GPIO_InitStructure2.GPIO_Mode = GPIO_Mode_AN;
-	GPIO_InitStructure2.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-	GPIO_Init(GPIOF, &GPIO_InitStructure2);
-}
 
 void inicialitza_sistema(void){
 	init_clock();
@@ -641,7 +631,7 @@ void inicialitza_sistema(void){
 	ConfiguraPD1();
 	init_switch();
 	configuraGPIOE();
-	configGpioAdc();
+	//configGpioAdc();
 	configuracionDMAyADC();
 	//entra = ADC_GetConversionValue(ADC3);
 
