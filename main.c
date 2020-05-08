@@ -117,7 +117,7 @@ void configuracionDMAyADC(void){
 
 	ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
 	ADC_InitStructure.ADC_ScanConvMode = ENABLE; //
-	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
+	ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
 	ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_Rising;
 	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigInjecConv_T5_TRGO; //
 	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
@@ -129,7 +129,6 @@ void configuracionDMAyADC(void){
 	ADC_RegularChannelConfig(ADC3, ADC_Channel_4, 1, ADC_SampleTime_15Cycles);
 	ADC_RegularChannelConfig(ADC3, ADC_Channel_5, 1, ADC_SampleTime_15Cycles);
 	ADC_RegularChannelConfig(ADC3, ADC_Channel_6, 1, ADC_SampleTime_15Cycles);
-
 
 
 
@@ -149,8 +148,10 @@ void configuracionDMAyADC(void){
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x05;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-	//DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
-	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC|DMA_IT_HT, ENABLE);
+	DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
+	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, ENABLE);
+
+
 
 
 	//Si no va, la configurem així
@@ -172,14 +173,14 @@ void DMA_MemToMem_Config(void){
 	DMA_InitTypeDef       DMA_InitStructure;
 	//GPIO_InitTypeDef      GPIO_InitStructure;
 
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2 | RCC_AHB1Periph_GPIOC |RCC_AHB1Periph_GPIOF, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
 
 	DMA_InitStructure.DMA_Channel = DMA_Channel_2;
 	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&ADC3ConvertedValue;
 	DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)&FinalValue;
 	DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToMemory;
 	DMA_InitStructure.DMA_BufferSize = (uint32_t)MIDA;
-	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Enable;
 	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
 	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord; //16 bits
 	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord; //16 bits
@@ -196,11 +197,12 @@ void DMA_MemToMem_Config(void){
 	NVIC_InitTypeDef NVIC_InitStructure;
 	/* Enable the DMA Stream IRQ Channel */
 	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream0_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x00;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x01;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-	//DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
+	DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
+
 	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, ENABLE);
 
 }
