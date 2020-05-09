@@ -92,18 +92,7 @@ void configuracionDMAyADC(void){
 	DMA_Cmd(DMA2_Stream0, ENABLE);
 
 
-	GPIO_InitTypeDef      GPIO_InitStructure;
-	GPIO_InitTypeDef      GPIO_InitStructure2;
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-	GPIO_InitStructure2.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 ;
-	GPIO_InitStructure2.GPIO_Mode = GPIO_Mode_AN;
-	GPIO_InitStructure2.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-	GPIO_Init(GPIOF, &GPIO_InitStructure2);
 
 	ADC_CommonInitStructure.ADC_Mode = ADC_Mode_Independent;
 	ADC_CommonInitStructure.ADC_Prescaler = ADC_Prescaler_Div2;
@@ -122,10 +111,11 @@ void configuracionDMAyADC(void){
 	ADC_Init(ADC3, &ADC_InitStructure);
 
 
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 1, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_4, 1, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_5, 1, ADC_SampleTime_15Cycles);
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_6, 1, ADC_SampleTime_15Cycles);
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_13 , 1, ADC_SampleTime_15Cycles);
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_4, 2, ADC_SampleTime_15Cycles);
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_5, 3, ADC_SampleTime_15Cycles);
+	ADC_RegularChannelConfig(ADC3, ADC_Channel_6, 4, ADC_SampleTime_15Cycles);
+
 
 	//DEspues del ADC DMAREQ
 	ADC_DMARequestAfterLastTransferCmd(ADC3, ENABLE);
@@ -616,7 +606,33 @@ void init_button(void){
 	GPIO_Init(GPIOA, &gpio);
 }
 
+void gpioConfigADC(){
+	GPIO_InitTypeDef      GPIO_InitStructure;
+	GPIO_InitTypeDef      GPIO_InitStructure2;
+	GPIO_InitTypeDef      GPIO_InitStructure3;
+	GPIO_InitTypeDef      GPIO_InitStructure4;
 
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+	GPIO_InitStructure2.GPIO_Pin = GPIO_Pin_6;
+	GPIO_InitStructure2.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_InitStructure2.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOF, &GPIO_InitStructure2);
+
+	GPIO_InitStructure3.GPIO_Pin = GPIO_Pin_7 ;
+	GPIO_InitStructure3.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_InitStructure3.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOF, &GPIO_InitStructure3);
+
+	GPIO_InitStructure4.GPIO_Pin = GPIO_Pin_8 ;
+	GPIO_InitStructure4.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_InitStructure4.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOF, &GPIO_InitStructure4);
+
+}
 
 void inicialitza_sistema(void){
 	init_clock();
@@ -634,6 +650,7 @@ void inicialitza_sistema(void){
 	//configGpioAdc();
 	configuracionDMAyADC();
 	//entra = ADC_GetConversionValue(ADC3);
+	gpioConfigADC();
 
 }
 
