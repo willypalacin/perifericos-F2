@@ -92,7 +92,7 @@ void configuracionDMAyADC(void){
 	DMA_Cmd(DMA2_Stream0, ENABLE);
 
 
-
+	gpioConfigADC();
 
 	ADC_CommonInitStructure.ADC_Mode = ADC_Mode_Independent;
 	ADC_CommonInitStructure.ADC_Prescaler = ADC_Prescaler_Div2;
@@ -139,17 +139,6 @@ void configuracionDMAyADC(void){
 
 
 
-
-	//Si no va, la configurem així
-	/*
-	//Configurem la interrupció, per quan acabi la transferència
-	NVIC_InitTypeDef NVIC_InitStructure;
-	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream0_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority =0;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority =0;
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
-	*/
 }
 
 void DMA_MemToMem_Config(void){
@@ -158,6 +147,16 @@ void DMA_MemToMem_Config(void){
 	//ADC_CommonInitTypeDef ADC_CommonInitStructure;
 	DMA_InitTypeDef       DMA_InitStructure;
 	//GPIO_InitTypeDef      GPIO_InitStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+		/* Enable the DMA Stream IRQ Channel */
+		NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream0_IRQn;
+		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01;
+		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x01;
+		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+		NVIC_Init(&NVIC_InitStructure);
+		//DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
+
+		DMA_ITConfig(DMA2_Stream0, DMA_IT_TC|DMA_IT_TCIF0, ENABLE);
 
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
 
@@ -170,7 +169,7 @@ void DMA_MemToMem_Config(void){
 	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
 	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord; //16 bits
 	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord; //16 bits
-	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal; //No se si al ser memory to meromy ha de ser circular i activar FIFO... (sha de provar)
+	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
 	DMA_InitStructure.DMA_Priority = DMA_Priority_High;
 	DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
 	DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_HalfFull;
@@ -180,16 +179,6 @@ void DMA_MemToMem_Config(void){
 	DMA_Cmd(DMA2_Stream0, ENABLE);
 
 
-	NVIC_InitTypeDef NVIC_InitStructure;
-	/* Enable the DMA Stream IRQ Channel */
-	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream0_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x09;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x09;
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
-	DMA_ClearITPendingBit(DMA2_Stream0, DMA_IT_TCIF0);
-
-	DMA_ITConfig(DMA2_Stream0, DMA_IT_TC, ENABLE);
 
 }
 
@@ -252,15 +241,27 @@ void DMA2_Stream0_IRQHandler(void){
 			//Desactivem ADC
 			ADC_Cmd(ADC3, DISABLE);
 
+
+				//Activamos ADC3
+
+
 			DMA_option = 1;
 			//Configurem la DMA perque passi de memoria a memoria
 			DMA_MemToMem_Config();
 
+
+
 		}else {
-
-			//configuracionDMAyADC();
-
 			DMA_option = 0;
+			//ADC_Cmd(ADC3, ENABLE);
+			//ADC_DMACmd(ADC3, ENABLE);
+
+
+			//ADC_SoftwareStartConv(ADC3);
+
+			configuracionDMAyADC();
+
+
 			//transferencia_completada = 1;
 		}
 	}
@@ -648,9 +649,10 @@ void inicialitza_sistema(void){
 	init_switch();
 	configuraGPIOE();
 	//configGpioAdc();
+
 	configuracionDMAyADC();
 	//entra = ADC_GetConversionValue(ADC3);
-	gpioConfigADC();
+
 
 }
 
